@@ -23,8 +23,11 @@
    [:h1 "Guestbook " (session/get :user)]
    [:p "Welcome to my guestbook"]
    [:p error]
+
    (show-guests)
+
    [:hr]
+
    (form-to
     [:post "/"]
     [:p "Name:" (text-field "name" name)]
