@@ -1,23 +1,52 @@
 (ns liberator-service.routes.home
   (:require [compojure.core :refer :all]
             [liberator.core
-             :refer [defresource request-method-in]]))
+             :refer [defresource request-method-in]]
+            [cheshire.core :refer [generate-string]]
+            [noir.io :as io]
+            [clojure.java.io :refer [file]]))
 
-(defn- used-request-method [context]
-  (get-in context [:request :request-method]))
+(def users (atom ["John" "Jane"]))
+
+(defn- user-in-form-params [context]
+  (-> context
+      (get-in [:request :form-params])
+      (get "user")))
+
+(defn- add-user-action [context]
+  (swap! users conj (user-in-form-params context)))
+
+(def ^:private home-html-path "/home.html")
 
 (defresource home
-  :service-available? true
-  :handle-service-not-available "service is not available"
+  :available-media-types ["text/html"]
 
-  :method-allowed? (request-method-in :get)
-  :handle-method-not-allowed
-  (fn [context]
-    (str (used-request-method context) " is not allowed"))
+  :exists?
+  (fn [_]
+    [(io/get-resource home-html-path)
+     {::file (file (str (io/resource-path) home-html-path))}])
 
-  :handle-ok "Hello World!"
-  :etag "fixed-etag"
-  :available-media-types ["text/plain"])
+  :handle-ok
+  (fn [_]
+    (clojure.java.io/input-stream (io/get-resource home-html-path)))
+
+  :last-modified
+  (fn [{{{resource :resource} :route-params} :request}]
+    (.lastModified (file (str (io/resource-path) home-html-path)))))
+
+(defresource get-users
+  :allowed-methods [:get]
+  :handle-ok (fn [_] (generate-string @users))
+  :available-media-types ["application/json"])
+
+(defresource add-user
+  :method-allowed? (request-method-in :post)
+  :post! add-user-action
+  :handle-created (fn [_] (generate-string @users))
+  :available-media-types ["application/json"])
 
 (defroutes home-routes
-  (ANY "/" request home))
+  (ANY "/" request home)
+  (ANY "/add-user" request add-user)
+  (ANY "/users" request get-users))
+
