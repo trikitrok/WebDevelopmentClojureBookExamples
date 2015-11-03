@@ -4,6 +4,7 @@
              :refer [defresource]]))
 
 (defresource home
+  :service-available? false
   :handle-ok "Hello World!"
   :etag "fixed-etag"
   :available-media-types ["text/plain"])
