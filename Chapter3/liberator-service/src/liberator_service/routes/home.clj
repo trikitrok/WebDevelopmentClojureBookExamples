@@ -8,10 +8,13 @@
 
 (defresource home
   :service-available? true
+  :handle-service-not-available "service is not available"
+
   :method-allowed? (request-method-in :get)
   :handle-method-not-allowed
   (fn [context]
     (str (used-request-method context) " is not allowed"))
+
   :handle-ok "Hello World!"
   :etag "fixed-etag"
   :available-media-types ["text/plain"])
