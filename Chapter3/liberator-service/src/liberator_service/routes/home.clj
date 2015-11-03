@@ -3,8 +3,13 @@
             [liberator.core
              :refer [defresource]]))
 
+(defn- request-method [context]
+  (get-in context [:request :request-method]))
+
 (defresource home
-  :service-available? false
+  :method-allowed?
+  (fn [context]
+    (= :get (request-method context)))
   :handle-ok "Hello World!"
   :etag "fixed-etag"
   :available-media-types ["text/plain"])
