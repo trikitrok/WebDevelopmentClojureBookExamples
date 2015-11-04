@@ -8,34 +8,34 @@
 
 (def users (atom ["John" "Jane"]))
 
-(defn- user-in-form-params [context]
+(defn- extract-user [context]
   (-> context
       (get-in [:request :form-params])
       (get "user")))
 
 (defn- add-user-action [context]
-  (swap! users conj (user-in-form-params context)))
+  (swap! users conj (extract-user context)))
 
 (def ^:private home-html-path "/home.html")
 
 (defn- empty-user-name? [context]
-  (empty? (user-in-form-params context)))
+  (empty? (extract-user context)))
+
+(defn- exist-file? [path]
+  [(io/get-resource path)
+   {::file (file (str (io/resource-path) path))}])
+
+(defn- open-file [path]
+  (clojure.java.io/input-stream (io/get-resource home-html-path)))
+
+(defn- last-modified [path]
+  (.lastModified (file (str (io/resource-path) home-html-path))))
 
 (defresource home
   :available-media-types ["text/html"]
-
-  :exists?
-  (fn [_]
-    [(io/get-resource home-html-path)
-     {::file (file (str (io/resource-path) home-html-path))}])
-
-  :handle-ok
-  (fn [_]
-    (clojure.java.io/input-stream (io/get-resource home-html-path)))
-
-  :last-modified
-  (fn [{{{resource :resource} :route-params} :request}]
-    (.lastModified (file (str (io/resource-path) home-html-path)))))
+  :exists? (fn [_] (exist-file? home-html-path))
+  :handle-ok  (fn [_] (open-file home-html-path))
+  :last-modified (fn [_] (last-modified home-html-path)))
 
 (defresource get-users
   :allowed-methods [:get]
