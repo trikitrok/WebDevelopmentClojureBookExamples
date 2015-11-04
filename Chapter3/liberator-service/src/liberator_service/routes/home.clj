@@ -18,6 +18,9 @@
 
 (def ^:private home-html-path "/home.html")
 
+(defn- empty-user-name? [context]
+  (empty? (user-in-form-params context)))
+
 (defresource home
   :available-media-types ["text/html"]
 
@@ -40,6 +43,8 @@
   :available-media-types ["application/json"])
 
 (defresource add-user
+  :malformed? empty-user-name?
+  :handle-malformed "user name can't be empty"
   :method-allowed? (request-method-in :post)
   :post! add-user-action
   :handle-created (fn [_] (generate-string @users))
@@ -49,4 +54,3 @@
   (ANY "/" request home)
   (ANY "/add-user" request add-user)
   (ANY "/users" request get-users))
-
