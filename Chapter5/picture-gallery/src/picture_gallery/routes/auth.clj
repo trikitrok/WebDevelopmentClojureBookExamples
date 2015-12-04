@@ -19,28 +19,35 @@
   (POST "/register" [id pass pass1]
     (handle-registration id pass pass1)))
 
+(defn control [id label field]
+  (list
+    (validation/on-error id error-item)
+    label
+    field
+    [:br]))
+
 (defn registration-page [& [id]]
   (layout/common
     (form-to
       [:post "/register"]
-      (validation/on-error :id error-item)
-      (label "user-id" "user id")
-      (text-field {:tabindex 1} "id" id)
-      [:br]
-      (validation/on-error :pass error-item)
-      (label "pass" "password")
-      (password-field {:tabindex 2} "pass")
-      [:br]
-      (validation/on-error :pass1 error-item)
-      (label "pass1" "retype password")
-      (password-field {:tabindex 3} "pass1")
-      [:br]
+      (control
+        :id
+        (label "user-id" "user id")
+        (text-field {:tabindex 1} "id" id))
+      (control
+        :pass
+        (label "pass" "password")
+        (password-field {:tabindex 2} "pass"))
+      (control
+        :pass1
+        (label "pass1" "retype password")
+        (password-field {:tabindex 3} "pass1"))
       (submit-button {:tabindex 4} "create account"))))
 
 (defn handle-registration [id pass pass1]
   (if (valid? id pass pass1)
     (do (session/put! :user id)
-      (resp/redirect "/"))
+        (resp/redirect "/"))
     (registration-page id)))
 
 (defn valid? [id pass pass1]
