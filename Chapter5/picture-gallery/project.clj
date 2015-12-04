@@ -6,7 +6,7 @@
                  [hiccup "1.0.5"]
                  [ring-server "0.3.1"]
                  [postgresql/postgresql "9.1-901.jdbc4"]
-                 [org.clojure/java.jdbc "0.23"]
+                 [org.clojure/java.jdbc "0.2.3"]
                  [lib-noir "0.7.6"]]
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler picture-gallery.handler/app
