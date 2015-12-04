@@ -25,17 +25,17 @@
       [:post "/register"]
       (validation/on-error :id error-item)
       (label "user-id" "user id")
-      (text-field "id" id)
+      (text-field {:tabindex 1} "id" id)
       [:br]
       (validation/on-error :pass error-item)
       (label "pass" "password")
-      (password-field "pass")
+      (password-field {:tabindex 2} "pass")
       [:br]
       (validation/on-error :pass1 error-item)
       (label "pass1" "retype password")
-      (password-field "pass1")
+      (password-field {:tabindex 3} "pass1")
       [:br]
-      (submit-button "create account"))))
+      (submit-button {:tabindex 4} "create account"))))
 
 (defn handle-registration [id pass pass1]
   (if (valid? id pass pass1)
