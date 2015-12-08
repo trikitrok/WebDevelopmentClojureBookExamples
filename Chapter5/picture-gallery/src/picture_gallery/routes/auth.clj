@@ -12,7 +12,8 @@
 (declare registration-page
          handle-registration
          valid?
-         error-item)
+         error-item
+         format-error)
 
 (defroutes auth-routes
            (GET "/register" []
@@ -48,10 +49,13 @@
 
 (defn handle-registration [id pass pass1]
   (if (valid? id pass pass1)
-    (do
+    (try
       (db/create-user {:id id :pass (crypt/encrypt pass)})
       (session/put! :user id)
-      (resp/redirect "/"))
+      (resp/redirect "/")
+      (catch Exception ex
+        (validation/rule false [:id (format-error id ex)])
+        (registration-page)))
     (registration-page id)))
 
 (defn valid? [id pass pass1]
@@ -65,3 +69,12 @@
 
 (defn error-item [[error]]
   [:div.error error])
+
+(defn format-error [id ex]
+  (cond
+    (and (instance? org.postgresql.util.PSQLException ex)
+         (zero? (.getErrorCode ex)))
+    (str "The user with id " id " already exists!")
+
+    :else
+    "An error occured while processing the request"))
