@@ -30,13 +30,13 @@
   upload-routes
 
   (GET "/upload" [info]
-    (upload-page info))
+    (restricted (upload-page info)))
 
   (POST "/upload" [file]
-    (handle-upload file))
+    (restricted (handle-upload file)))
 
-  (GET "/img/:file-name" [file-name]
-    (serve-file file-name)))
+  (GET "/img/:file-name" [user-id file-name]
+    (serve-file user-id file-name)))
 
 (defn upload-page [info]
   (layout/common
@@ -60,11 +60,14 @@
         (catch Exception ex
           (str "error uploading file " (.getMessage ex)))))))
 
-(defn gallery-path []
-  "galleries")
+(def galleries "galleries")
 
-(defn serve-file [file-name]
-  (file-response (str (gallery-path) File/separator file-name)))
+(defn gallery-path []
+  (str galleries File/separator (session/get :user)))
+
+(defn serve-file [user-id file-name]
+  (file-response
+    (str galleries File/separator user-id File/separator file-name)))
 
 (def thumb-size 150)
 (def thumb-prefix "thumb_")

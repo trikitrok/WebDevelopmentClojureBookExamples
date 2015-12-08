@@ -1,13 +1,17 @@
 (ns picture-gallery.routes.auth
-  (:require [hiccup.form :refer :all]
-            [compojure.core :refer :all]
-            [picture-gallery.routes.home :refer :all]
-            [picture-gallery.views.layout :as layout]
-            [noir.session :as session]
-            [noir.response :as resp]
-            [noir.validation :as validation]
-            [noir.util.crypt :as crypt]
-            [picture-gallery.models.db :as db]))
+  (:require
+    [hiccup.form :refer :all]
+    [compojure.core :refer :all]
+    [picture-gallery.routes.home :refer :all]
+    [picture-gallery.views.layout :as layout]
+    [noir.session :as session]
+    [noir.response :as resp]
+    [noir.validation :as validation]
+    [noir.util.crypt :as crypt]
+    [picture-gallery.models.db :as db]
+    [picture-gallery.routes.upload :refer [gallery-path]])
+  (:import
+    java.io.File))
 
 (declare registration-page
          handle-registration
@@ -15,7 +19,8 @@
          error-item
          format-error
          handle-login
-         handle-logout)
+         handle-logout
+         create-gallery-path)
 
 (defroutes
   auth-routes
@@ -43,6 +48,7 @@
     (try
       (db/create-user {:id id :pass (crypt/encrypt pass)})
       (session/put! :user id)
+      (create-gallery-path)
       (resp/redirect "/")
       (catch Exception ex
         (validation/rule false [:id (format-error id ex)])
@@ -97,3 +103,8 @@
 
     :else
     "An error occured while processing the request"))
+
+(defn create-gallery-path []
+  (let [user-path (File. (gallery-path))]
+    (when-not (.exists user-path)
+      (.mkdirs user-path))))
