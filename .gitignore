@@ -10,3 +10,4 @@
 **/.lein-env
 **/*.iml
 **/.idea/*
+Chapter5/picture-gallery/galleries/*
