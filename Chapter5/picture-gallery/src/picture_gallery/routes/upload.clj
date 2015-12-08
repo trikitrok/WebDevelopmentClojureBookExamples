@@ -24,7 +24,8 @@
          gallery-path
          serve-file
          save-thumbnail
-         thumb-prefix)
+         thumb-prefix
+         thumbnail-path)
 
 (defroutes
   upload-routes
@@ -35,7 +36,7 @@
   (POST "/upload" [file]
     (restricted (handle-upload file)))
 
-  (GET "/img/:file-name" [user-id file-name]
+  (GET "/img/:user-id/:file-name" [user-id file-name]
     (serve-file user-id file-name)))
 
 (defn upload-page [info]
@@ -55,10 +56,17 @@
       (try
         (upload-file (gallery-path) file :create-path? true)
         (save-thumbnail file)
-        (image {:height "150px"}
-               (str "/img/" thumb-prefix (url-encode filename)))
+        (db/add-image (session/get :user) filename)
+        (image {:height "150px"} (thumbnail-path filename))
         (catch Exception ex
           (str "error uploading file " (.getMessage ex)))))))
+
+(defn thumbnail-path [filename]
+  (str "/img/"
+       (session/get :user)
+       "/"
+       thumb-prefix
+       (url-encode filename)))
 
 (def galleries "galleries")
 
