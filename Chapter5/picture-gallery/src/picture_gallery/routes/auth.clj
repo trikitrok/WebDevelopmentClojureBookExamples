@@ -5,7 +5,9 @@
             [picture-gallery.views.layout :as layout]
             [noir.session :as session]
             [noir.response :as resp]
-            [noir.validation :as validation]))
+            [noir.validation :as validation]
+            [noir.util.crypt :as crypt]
+            [picture-gallery.models.db :as db]))
 
 (declare registration-page
          handle-registration
@@ -13,11 +15,11 @@
          error-item)
 
 (defroutes auth-routes
-  (GET "/register" []
-    (registration-page))
+           (GET "/register" []
+             (registration-page))
 
-  (POST "/register" [id pass pass1]
-    (handle-registration id pass pass1)))
+           (POST "/register" [id pass pass1]
+             (handle-registration id pass pass1)))
 
 (defn control [id label field]
   (list
@@ -46,8 +48,10 @@
 
 (defn handle-registration [id pass pass1]
   (if (valid? id pass pass1)
-    (do (session/put! :user id)
-        (resp/redirect "/"))
+    (do
+      (db/create-user {:id id :pass (crypt/encrypt pass)})
+      (session/put! :user id)
+      (resp/redirect "/"))
     (registration-page id)))
 
 (defn valid? [id pass pass1]
