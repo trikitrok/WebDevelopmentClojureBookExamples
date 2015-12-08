@@ -9,7 +9,7 @@
     [noir.validation :as validation]
     [noir.util.crypt :as crypt]
     [picture-gallery.models.db :as db]
-    [picture-gallery.routes.upload :refer [gallery-path]])
+    [picture-gallery.util :refer [gallery-path]])
   (:import
     java.io.File))
 
