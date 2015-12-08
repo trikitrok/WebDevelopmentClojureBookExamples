@@ -23,7 +23,8 @@
          handle-upload
          gallery-path
          serve-file
-         save-file)
+         save-thumbnail
+         thumb-prefix)
 
 (defroutes
   upload-routes
@@ -51,7 +52,13 @@
   (upload-page
     (if (empty? filename)
       "please select a file to upload"
-      (save-file file filename))))
+      (try
+        (upload-file (gallery-path) file :create-path? true)
+        (save-thumbnail file)
+        (image {:height "150px"}
+               (str "/img/" thumb-prefix (url-encode filename)))
+        (catch Exception ex
+          (str "error uploading file " (.getMessage ex)))))))
 
 (defn gallery-path []
   "galleries")
@@ -59,10 +66,29 @@
 (defn serve-file [file-name]
   (file-response (str (gallery-path) File/separator file-name)))
 
-(defn save-file [file filename]
-  (try
-    (upload-file (gallery-path) file)
-    (image {:height "150px"}
-           (str "/img/" (url-encode filename)))
-    (catch Exception ex
-      (str "error uploading file " (.getMessage ex)))))
+(def thumb-size 150)
+(def thumb-prefix "thumb_")
+
+(defn scale [img ratio width height]
+  (let [scale (AffineTransform/getScaleInstance
+                (double ratio) (double ratio))
+        transform-op (AffineTransformOp.
+                       scale
+                       AffineTransformOp/TYPE_BILINEAR)]
+    (.filter transform-op
+             img
+             (BufferedImage. width height (.getType img)))))
+
+(defn scale-image [file]
+  (let [img (ImageIO/read file)
+        img-width (.getWidth img)
+        img-height (.getHeight img)
+        ratio (/ thumb-size img-height)]
+    (scale img ratio (int (* img-width ratio)) thumb-size)))
+
+(defn save-thumbnail [{:keys [filename]}]
+  (let [path (str (gallery-path) File/separator)]
+    (ImageIO/write
+      (scale-image (io/input-stream (str path filename)))
+      "jpeg"
+      (File. (str path thumb-prefix filename)))))
