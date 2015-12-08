@@ -13,14 +13,23 @@
          handle-registration
          valid?
          error-item
-         format-error)
+         format-error
+         handle-login
+         handle-logout)
 
-(defroutes auth-routes
-           (GET "/register" []
-             (registration-page))
+(defroutes
+  auth-routes
+  (GET "/register" []
+    (registration-page))
 
-           (POST "/register" [id pass pass1]
-             (handle-registration id pass pass1)))
+  (POST "/register" [id pass pass1]
+    (handle-registration id pass pass1))
+
+  (POST "/login" [id pass]
+    (handle-login id pass))
+
+  (GET "/logout" []
+    (handle-logout)))
 
 (defn control [id label field]
   (list
@@ -28,6 +37,27 @@
     label
     field
     [:br]))
+
+(defn handle-registration [id pass pass1]
+  (if (valid? id pass pass1)
+    (try
+      (db/create-user {:id id :pass (crypt/encrypt pass)})
+      (session/put! :user id)
+      (resp/redirect "/")
+      (catch Exception ex
+        (validation/rule false [:id (format-error id ex)])
+        (registration-page)))
+    (registration-page id)))
+
+(defn handle-login [id pass]
+  (let [user (db/get-user id)]
+    (if (and user (crypt/compare pass (:pass user)))
+      (session/put! :user id)))
+  (resp/redirect "/"))
+
+(defn handle-logout []
+  (session/clear!)
+  (resp/redirect "/"))
 
 (defn registration-page [& [id]]
   (layout/base
@@ -46,17 +76,6 @@
         (label "pass1" "retype password")
         (password-field {:tabindex 3} "pass1"))
       (submit-button {:tabindex 4} "create account"))))
-
-(defn handle-registration [id pass pass1]
-  (if (valid? id pass pass1)
-    (try
-      (db/create-user {:id id :pass (crypt/encrypt pass)})
-      (session/put! :user id)
-      (resp/redirect "/")
-      (catch Exception ex
-        (validation/rule false [:id (format-error id ex)])
-        (registration-page)))
-    (registration-page id)))
 
 (defn valid? [id pass pass1]
   (validation/rule (validation/has-value? id)
