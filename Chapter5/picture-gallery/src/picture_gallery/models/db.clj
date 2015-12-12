@@ -3,9 +3,9 @@
 
 (def db
   {:subprotocol "postgresql"
-   :subname     "//localhost/gallery"
-   :user        "admin"
-   :password    "admin"})
+   :subname "//localhost/gallery"
+   :user "admin"
+   :password "admin"})
 
 (defmacro with-db [f & body]
   `(sql/with-connection ~db (~f ~@body)))
@@ -52,3 +52,7 @@
 (defn delete-image [userid name]
   (with-db
     sql/delete-rows :images ["userid=? and name=?" userid name]))
+
+(defn delete-user [userid]
+  (with-db
+    sql/delete-rows :users ["id=?" userid]))

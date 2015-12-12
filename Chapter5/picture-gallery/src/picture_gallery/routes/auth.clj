@@ -9,7 +9,9 @@
     [noir.validation :as validation]
     [noir.util.crypt :as crypt]
     [picture-gallery.models.db :as db]
-    [picture-gallery.util :refer [gallery-path]])
+    [picture-gallery.util :refer [gallery-path]]
+    [picture-gallery.routes.upload :refer [delete-image]]
+    [noir.util.route :refer [restricted]])
   (:import
     java.io.File))
 
@@ -20,12 +22,20 @@
          format-error
          handle-login
          handle-logout
-         create-gallery-path)
+         create-gallery-path
+         delete-account-page
+         handle-confirm-delete)
 
 (defroutes
   auth-routes
   (GET "/register" []
     (registration-page))
+
+  (GET "/logout" []
+    (handle-logout))
+
+  (GET "/delete-account" []
+    (restricted (delete-account-page)))
 
   (POST "/register" [id pass pass1]
     (handle-registration id pass pass1))
@@ -33,8 +43,8 @@
   (POST "/login" [id pass]
     (handle-login id pass))
 
-  (GET "/logout" []
-    (handle-logout)))
+  (POST "/confirm-delete" []
+    (restricted (handle-confirm-delete))))
 
 (defn control [id label field]
   (list
@@ -108,3 +118,21 @@
   (let [user-path (File. (gallery-path))]
     (when-not (.exists user-path)
       (.mkdirs user-path))))
+
+(defn delete-account-page []
+  (layout/common
+    (form-to
+      [:post "/confirm-delete"]
+      (submit-button "delete account"))
+    (form-to
+      [:get "/"]
+      (submit-button "cancel"))))
+
+(defn handle-confirm-delete []
+  (let [user (session/get :user)]
+    (doseq [{:keys [name]} (db/images-by-user user)]
+      (delete-image user name))
+    (clojure.java.io/delete-file (gallery-path))
+    (db/delete-user user))
+  (session/clear!)
+  (resp/redirect "/"))
