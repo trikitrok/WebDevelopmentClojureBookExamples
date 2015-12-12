@@ -26,9 +26,7 @@
          save-thumbnail
          delete-images)
 
-(defroutes
-  upload-routes
-
+(defroutes upload-routes
   (GET "/upload" [info]
     (restricted (upload-page info)))
 

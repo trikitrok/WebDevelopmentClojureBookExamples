@@ -9,6 +9,15 @@
     [picture-gallery.models.db :as db]
     [noir.session :as session]))
 
+(declare
+  display-gallery)
+
+(defroutes gallery-routes
+  (GET "/gallery/:userid" [userid]
+    (layout/common
+      (include-js "/js/gallery.js")
+      (display-gallery userid))))
+
 (defn- thumbnail-link [{:keys [userid name]}]
   [:div.thumbnail
    [:a {:class name :href (image-uri userid name)}
@@ -34,10 +43,3 @@
 
 (defn show-galleries []
   (map gallery-link (db/get-gallery-previews)))
-
-(defroutes
-  gallery-routes
-  (GET "/gallery/:userid" [userid]
-    (layout/common
-      (include-js "/js/gallery.js")
-      (display-gallery userid))))

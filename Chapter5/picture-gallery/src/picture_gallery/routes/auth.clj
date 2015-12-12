@@ -15,19 +15,15 @@
   (:import
     java.io.File))
 
-(declare registration-page
-         handle-registration
-         valid?
-         error-item
-         format-error
-         handle-login
-         handle-logout
-         create-gallery-path
-         delete-account-page
-         handle-confirm-delete)
+(declare
+  registration-page
+  handle-registration
+  handle-login
+  handle-logout
+  delete-account-page
+  handle-confirm-delete)
 
-(defroutes
-  auth-routes
+(defroutes auth-routes
   (GET "/register" []
     (registration-page))
 
@@ -46,12 +42,38 @@
   (POST "/confirm-delete" []
     (restricted (handle-confirm-delete))))
 
+(defn error-item [[error]]
+  [:div.error error])
+
 (defn control [id label field]
   (list
     (validation/on-error id error-item)
     label
     field
     [:br]))
+
+(defn valid? [id pass pass1]
+  (validation/rule (validation/has-value? id)
+                   [:id "user id is required"])
+  (validation/rule (validation/min-length? pass 5)
+                   [:pass "password must be at least 5 characters"])
+  (validation/rule (= pass pass1)
+                   [:pass "entered passwords do not match"])
+  (not (validation/errors? :id :pass :pass1)))
+
+(defn format-error [id ex]
+  (cond
+    (and (instance? org.postgresql.util.PSQLException ex)
+         (zero? (.getErrorCode ex)))
+    (str "The user with id " id " already exists!")
+
+    :else
+    "An error occured while processing the request"))
+
+(defn create-gallery-path []
+  (let [user-path (File. (gallery-path))]
+    (when-not (.exists user-path)
+      (.mkdirs user-path))))
 
 (defn handle-registration [id pass pass1]
   (if (valid? id pass pass1)
@@ -92,32 +114,6 @@
         (label "pass1" "retype password")
         (password-field {:tabindex 3} "pass1"))
       (submit-button {:tabindex 4} "create account"))))
-
-(defn valid? [id pass pass1]
-  (validation/rule (validation/has-value? id)
-                   [:id "user id is required"])
-  (validation/rule (validation/min-length? pass 5)
-                   [:pass "password must be at least 5 characters"])
-  (validation/rule (= pass pass1)
-                   [:pass "entered passwords do not match"])
-  (not (validation/errors? :id :pass :pass1)))
-
-(defn error-item [[error]]
-  [:div.error error])
-
-(defn format-error [id ex]
-  (cond
-    (and (instance? org.postgresql.util.PSQLException ex)
-         (zero? (.getErrorCode ex)))
-    (str "The user with id " id " already exists!")
-
-    :else
-    "An error occured while processing the request"))
-
-(defn create-gallery-path []
-  (let [user-path (File. (gallery-path))]
-    (when-not (.exists user-path)
-      (.mkdirs user-path))))
 
 (defn delete-account-page []
   (layout/common
