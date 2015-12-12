@@ -41,4 +41,10 @@
     (doall res)))
 
 (defn get-gallery-previews []
-  )
+  (with-db
+    sql/with-query-results
+    res
+    ["select * from
+     (select *, row_number() over (partition by userid) as row_number from images)
+     as row_number where row_number = 1"]
+    (doall res)))
