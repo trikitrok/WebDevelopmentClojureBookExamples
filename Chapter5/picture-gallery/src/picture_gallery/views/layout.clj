@@ -36,4 +36,4 @@
     (if-let [user (session/get :user)]
       (user-menu user)
       (guest-menu))
-    content))
+    [:div.content content]))
