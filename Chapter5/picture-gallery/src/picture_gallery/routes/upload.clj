@@ -107,4 +107,4 @@
     (resp/json
       (for [name names]
         {:name name
-         :stauts (delete-image userid name)}))))
+         :status (delete-image userid name)}))))
