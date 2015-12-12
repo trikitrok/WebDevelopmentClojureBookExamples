@@ -14,7 +14,7 @@ function deleteImages() {
   }
 
   $.post(
-    "/delete",
+    context + "/delete",
     {names: selectedIds},
     function(response) {
       var element;
